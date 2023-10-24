@@ -1,0 +1,255 @@
+#### First try
+class Time {
+  int hours = 0;
+  int minutes = 0;
+  int seconds = 0;
+
+  static int counter = 0;
+
+  Time(this.hours, this.minutes, this.seconds) {
+    counter++;
+    this.seconds = counter;
+  }
+
+  Time.withValues(int h, int m, int s)
+      : hours = (h >= 0 && h < 24) ? h : 0,
+        minutes = (m >= 0 && m < 60) ? m : 0,
+        seconds = (s >= 0 && s < 60) ? s : 0;
+
+  void show() {
+    print(
+        '$hours:${minutes < 10 ? '0$minutes' : '$minutes'}:${seconds < 10 ? '0$seconds' : '$seconds'}');
+  }
+
+  Time operator +(Map<Object, dynamic> data) {
+    int hoursToAdd = data['hours'] ?? 0;
+    int minutesToAdd = data['minutes'] ?? 0;
+    int secondsToAdd = data['seconds'] ?? 0;
+
+    return _performOperation(
+        Time.withValues(hoursToAdd, minutesToAdd, secondsToAdd),
+        (a, b) => a + b,
+        (a) => a + 1,
+        (a) => a - 1,
+        (a) => a >= 60);
+  }
+
+  Time _performOperation(Time other, Function(int, int) operation,
+      Function(int) increment, Function(int) decrement, Function(int) check) {
+    int newSeconds = operation(seconds, other.seconds);
+    int newMinutes = operation(minutes, other.minutes) + (newSeconds ~/ 60);
+    int newHours = operation(hours, other.hours) + (newMinutes ~/ 60);
+
+    Time result = Time.withValues(
+      newHours % 24,
+      newMinutes % 60,
+      newSeconds % 60,
+    );
+
+    if (check(newSeconds)) {
+      result.seconds = increment(result.seconds);
+      result.minutes += (result.seconds ~/ 60);
+      result.seconds %= 60;
+    }
+
+    if (check(newMinutes)) {
+      result.minutes = increment(result.minutes);
+      result.hours += (result.minutes ~/ 60);
+      result.minutes %= 60;
+    }
+
+    return result;
+  }
+
+  Time _performIncrement() {
+    seconds++;
+    if (seconds >= 60) {
+      seconds = 0;
+      minutes++;
+      if (minutes >= 60) {
+        minutes = 0;
+        hours = (hours + 1) % 24;
+      }
+    }
+    return this;
+  }
+
+  Time _performDecrement() {
+    seconds--;
+    if (seconds < 0) {
+      seconds = 59;
+      minutes--;
+      if (minutes < 0) {
+        minutes = 59;
+        hours = (hours - 1 + 24) % 24;
+      }
+    }
+    return this;
+  }
+}
+
+void main() {
+  var time1 = Time.withValues(10, 30, 45);
+
+  print('\nTesting Addition Operator with Map:');
+  print('Original Time: ');
+  time1.show();
+
+  var timeToAdd = {'hours': 2, 'minutes': 15, 'seconds': 30};
+  print('Adding time with Map: ');
+  (time1 + timeToAdd).show();
+}
+--------------------------------------------------------------------------------------------
+#### Seconed try
+
+class Time {
+  int hours = 0;
+  int minutes = 0;
+  int seconds = 0;
+
+  static int counter = 0;
+
+  Time(this.hours, this.minutes, this.seconds) {
+    counter++;
+    this.seconds = counter;
+  }
+
+  Time.withValues(int h, int m, int s)
+      : hours = (h >= 0 && h < 24) ? h : 0,
+        minutes = (m >= 0 && m < 60) ? m : 0,
+        seconds = (s >= 0 && s < 60) ? s : 0;
+
+  void show() {
+    print(
+        '$hours:${minutes < 10 ? '0$minutes' : '$minutes'}:${seconds < 10 ? '0$seconds' : '$seconds'}');
+  }
+
+  Time operator -() => _performDecrement();
+
+  Time operator *(int multiplier) {
+    return _performOperation(
+        Time.withValues(0, 0, 0),
+        (a, b) => a * multiplier,
+        (a) => a + multiplier,
+        (a) => a - multiplier,
+        (a) => false);
+  }
+
+  Time operator +(Map<Object, dynamic> data) {
+    int hoursToAdd = data['hours'] ?? 0;
+    int minutesToAdd = data['minutes'] ?? 0;
+    int secondsToAdd = data['seconds'] ?? 0;
+
+    return _performOperation(
+        Time.withValues(hoursToAdd, minutesToAdd, secondsToAdd),
+        (a, b) => a + b,
+        (a) => a + 1,
+        (a) => a - 1,
+        (a) => a >= 60);
+  }
+
+  Time _performOperation(Time other, Function(int, int) operation,
+      Function(int) increment, Function(int) decrement, Function(int) check) {
+    int newSeconds = operation(seconds, other.seconds);
+    int newMinutes = operation(minutes, other.minutes) + (newSeconds ~/ 60);
+    int newHours = operation(hours, other.hours) + (newMinutes ~/ 60);
+
+    Time result = Time.withValues(
+      newHours % 24,
+      newMinutes % 60,
+      newSeconds % 60,
+    );
+
+    if (check(newSeconds)) {
+      result.seconds = increment(result.seconds);
+      result.minutes += (result.seconds ~/ 60);
+      result.seconds %= 60;
+    }
+
+    if (check(newMinutes)) {
+      result.minutes = increment(result.minutes);
+      result.hours += (result.minutes ~/ 60);
+      result.minutes %= 60;
+    }
+
+    return result;
+  }
+
+  Time _performIncrement() {
+    seconds++;
+    if (seconds >= 60) {
+      seconds = 0;
+      minutes++;
+      if (minutes >= 60) {
+        minutes = 0;
+        hours = (hours + 1) % 24;
+      }
+    }
+    return this;
+  }
+
+  Time _performDecrement() {
+    seconds--;
+    if (seconds < 0) {
+      seconds = 59;
+      minutes--;
+      if (minutes < 0) {
+        minutes = 59;
+        hours = (hours - 1 + 24) % 24;
+      }
+    }
+    return this;
+  }
+}
+
+void main() {
+  var time1 = Time.withValues(10, 30, 45);
+  var time2 = Time.withValues(4, 45, 20);
+  var time3 = Time.withValues(0, 0, 0); // Initialize with valid values
+
+  time3 = time1 + time2;
+  print('Time1: ');
+  time1.show();
+  print('Time2: ');
+  time2.show();
+  print('Time3 (Time1 + Time2): ');
+  time3.show();
+
+  print('\nTesting Increment Operators:');
+  print('Original Time: ');
+  time1.show();
+
+  print('Pre-increment (++time1): ');
+  (time1).show();
+
+  print('Post-increment (time1++): ');
+  (time1).show();
+  print('After post-increment: ');
+  time1.show();
+
+  print('\nTesting Decrement Operators:');
+  print('Original Time: ');
+  time2.show();
+
+  print('Pre-decrement (--time2): ');
+  (time2).show();
+
+  print('Post-decrement (time2--): ');
+  (time2).show();
+  print('After post-decrement: ');
+  time2.show();
+
+  print('\nTesting Multiplication Operator:');
+  print('Original Time: ');
+  time1.show();
+
+  print('Multiplying time1 by 3: ');
+  (time1 * 3).show();
+
+  print('\nTesting Addition Operator with Map:');
+  print('Original Time: ');
+  time1.show();
+
+
+
+}
