@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:scratcher/scratcher.dart';
 
 void main() {
   runApp(MyApp());
 }
 
 class Player {
-  String name;
-  int iconIndex;
-  Player({required this.name, required this.iconIndex});
+  final String name;
+  final IconData icon;
+
+  Player({required this.name, required this.icon});
 }
 
 class MyApp extends StatelessWidget {
@@ -61,66 +63,71 @@ class CategoryPage extends StatefulWidget {
 
 class _CategoryPageState extends State<CategoryPage> {
   List<Player> players = [];
+  IconData selectedIcon = Icons.person; // Default icon
 
-  Future<Player?> _addPlayer() async {
-    TextEditingController controller = TextEditingController();
-    int selectedIcon = 0;
-    return showDialog<Player>(
+  Future<void> _addPlayer() async {
+    String playerName = '';
+    int selectedIconIndex = 0;
+    List<IconData> icons = [Icons.person, Icons.star, Icons.ac_unit];
+
+    await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Choose an icon and enter the player name'),
-          content: Column(
-            children: [
-              TextField(
-                controller: controller,
-                decoration: const InputDecoration(hintText: "Player Name"),
-              ),
-              Wrap(
-                children: List<Widget>.generate(5, (index) {
-                  return GestureDetector(
-                    onTap: () {
-                      selectedIcon = index;
-                      Navigator.of(context).pop();
+          title: Text('Choose an icon and enter the player name'),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Column(
+                children: [
+                  TextField(
+                    onChanged: (value) {
+                      playerName = value;
                     },
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      child: Icon(
-                        Icons.person_outline,
-                        color: selectedIcon == index
-                            ? const Color.fromARGB(255, 30, 41, 50)
-                            : Colors.grey,
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ],
+                    decoration: InputDecoration(labelText: 'Player Name'),
+                  ),
+                  Wrap(
+                    children: List.generate(icons.length, (index) {
+                      return IconButton(
+                        icon: Icon(icons[index]),
+                        onPressed: () {
+                          setState(() {
+                            selectedIconIndex = index;
+                          });
+                        },
+                        color: selectedIconIndex == index ? Colors.blue : null,
+                      );
+                    }),
+                  ),
+                ],
+              );
+            },
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('OK'),
+              child: Text('OK'),
               onPressed: () {
-                var newPlayer = Player(
-                  name: controller.text,
-                  iconIndex: selectedIcon,
-                );
-                setState(() {
-                  players.add(newPlayer);
-                });
-                Navigator.of(context).pop(newPlayer);
+                Navigator.of(context).pop(Player(
+                  name: playerName,
+                  icon: icons[selectedIconIndex],
+                ));
               },
             ),
           ],
         );
       },
-    );
+    ).then((newPlayer) {
+      if (newPlayer != null) {
+        setState(() {
+          players.add(newPlayer as Player);
+        });
+      }
+    });
   }
 
   @override
@@ -134,7 +141,7 @@ class _CategoryPageState extends State<CategoryPage> {
               itemCount: players.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  leading: const Icon(
+                  leading: Icon(
                     Icons.person_outline,
                     size: 50,
                   ),
@@ -144,12 +151,7 @@ class _CategoryPageState extends State<CategoryPage> {
             ),
           ),
           ElevatedButton(
-            onPressed: () async {
-              var addedPlayer = await _addPlayer();
-              if (addedPlayer != null) {
-                // Navigator.push is removed
-              }
-            },
+            onPressed: _addPlayer,
             child: const Text('Add Player'),
           ),
           if (players.length >= 3)
@@ -239,7 +241,21 @@ class TurnPage extends StatelessWidget {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('انت جوا السالفة'),
+          Scratcher(
+            brushSize: 40,
+            threshold: 50,
+            color: Colors.grey,
+            onChange: (value) {
+              print("Scratch progress: $value%");
+            },
+            child: Container(
+              alignment: Alignment.center,
+              height: 300,
+              width: 300,
+              child: const Text('انت جوا السالفة',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 200, 235, 151)),
@@ -275,8 +291,21 @@ class LastPage extends StatelessWidget {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(
-              width: 300, height: 200, child: Text('أنت برا السالفة')),
+          Scratcher(
+            brushSize: 40,
+            threshold: 50,
+            color: Colors.red,
+            onChange: (value) {
+              print("Scratch progress: $value%");
+            },
+            child: Container(
+              alignment: Alignment.center,
+              height: 300,
+              width: 300,
+              child: const Text('أنت برا السالفة',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 250, 0, 0),
