@@ -1,0 +1,299 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class Player {
+  String name;
+  int iconIndex;
+  Player({required this.name, required this.iconIndex});
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  final categories = [
+    "Animals",
+    "Clothes",
+    "Celebrities",
+    "Countries",
+    "Players"
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Game')),
+      body: GridView.builder(
+        itemCount: categories.length,
+        gridDelegate:
+            const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+        itemBuilder: (context, index) {
+          return ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CategoryPage()),
+              );
+            },
+            child: Text(categories[index]),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class CategoryPage extends StatefulWidget {
+  const CategoryPage({Key? key}) : super(key: key);
+
+  @override
+  _CategoryPageState createState() => _CategoryPageState();
+}
+
+class _CategoryPageState extends State<CategoryPage> {
+  List<Player> players = [];
+
+  Future<Player?> _addPlayer() async {
+    TextEditingController controller = TextEditingController();
+    int selectedIcon = 0;
+    return showDialog<Player>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Choose an icon and enter the player name'),
+          content: Column(
+            children: [
+              TextField(
+                controller: controller,
+                decoration: const InputDecoration(hintText: "Player Name"),
+              ),
+              Wrap(
+                children: List<Widget>.generate(5, (index) {
+                  return GestureDetector(
+                    onTap: () {
+                      selectedIcon = index;
+                      Navigator.of(context).pop();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      child: Icon(
+                        Icons.person_outline,
+                        color: selectedIcon == index
+                            ? const Color.fromARGB(255, 30, 41, 50)
+                            : Colors.grey,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                var newPlayer = Player(
+                  name: controller.text,
+                  iconIndex: selectedIcon,
+                );
+                setState(() {
+                  players.add(newPlayer);
+                });
+                Navigator.of(context).pop(newPlayer);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Category')),
+      body: Column(
+        children: <Widget>[
+          Expanded(
+            child: ListView.builder(
+              itemCount: players.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  leading: const Icon(
+                    Icons.person_outline,
+                    size: 50,
+                  ),
+                  title: Text(players[index].name),
+                );
+              },
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              var addedPlayer = await _addPlayer();
+              if (addedPlayer != null) {
+                // Navigator.push is removed
+              }
+            },
+            child: const Text('Add Player'),
+          ),
+          if (players.length >= 3)
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        GamePage(players: players, currentPlayerIndex: 0),
+                  ),
+                );
+              },
+              child: const Text('Start Game'),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class GamePage extends StatelessWidget {
+  final List<Player> players;
+  final int currentPlayerIndex;
+
+  const GamePage(
+      {super.key, required this.players, required this.currentPlayerIndex});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Game Page'),
+      ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('Player Name: ${players[currentPlayerIndex].name}'),
+          Text('Give ${players[currentPlayerIndex].name} the phone'),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 94, 244, 206),
+            ),
+            onPressed: () {
+              if (currentPlayerIndex + 1 < players.length) {
+                // Navigate to the turn page
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TurnPage(
+                      players: players,
+                      currentPlayerIndex: currentPlayerIndex + 1,
+                    ),
+                  ),
+                );
+              } else {
+                // Navigate to the last page
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LastPage(),
+                  ),
+                );
+              }
+            },
+            child: const Text('Next'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class TurnPage extends StatelessWidget {
+  final List<Player> players;
+  final int currentPlayerIndex;
+
+  const TurnPage(
+      {super.key, required this.players, required this.currentPlayerIndex});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Turn Page'),
+      ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('انت جوا السالفة'),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 200, 235, 151)),
+            onPressed: () {
+              // Navigate to the next game page
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GamePage(
+                    players: players,
+                    currentPlayerIndex: currentPlayerIndex,
+                  ),
+                ),
+              );
+            },
+            child: const Text('Next'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class LastPage extends StatelessWidget {
+  const LastPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Turn page'),
+      ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(
+              width: 300, height: 200, child: Text('أنت برا السالفة')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 250, 0, 0),
+            ),
+            onPressed: () {
+              // Navigate back to the category page
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CategoryPage(),
+                ),
+              );
+            },
+            child: const Text('Exit'),
+          ),
+        ],
+      ),
+    );
+  }
+}
